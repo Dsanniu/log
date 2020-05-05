@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+<!--    配置集中管理的属性  我们可以直接改属性的value值 格式${name} -->
+    <property name="pattern" value="[%-5level] %d{yyyy-MM-dd HH:mm:ss} %c %M %L [%thread] === %m %n" />
+    <property name="log_dir" value="/logs"/>
+<!--
+    日志格式：
+    %-5level
+    %d{yyyy-MM-dd HH:mm:ss}
+    %c 类的完整名称
+    %M 为method
+    %L 为行号
+    %thread 线程名称
+    %m或者%msg为信息
+    %n换行
+-->
+
+<!--    控制台 日志输出的appender-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+<!--        控制输出流对象 默认为system.out 改为system.err-->
+        <target>System.err</target>
+<!--        日志消息格式-->
+        <encoder value="ch.qos.logback.classic.PatternLayout">
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+
+
+<!-- 日志文件输出的appender -->
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+<!--        日志文件保存的位置-->
+        <file>${log_dir}/logback.log</file>
+        <encoder value="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${pattern}</pattern>
+        </encoder>
+    </appender>
+
+<!--    日志拆分和归档压缩的 appender  *************************  -->
+    <appender name="rollFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log_dir}/logback.log</file>
+        <encoder value="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${pattern}</pattern>
+        </encoder>
+<!--        指定拆分规则-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+<!--            按照时间和压缩格式声明拆分的文件名 每天-->
+            <fileNamePattern>${log_dir}/rolling.%d{yyyy-MM-dd}.log%i.gz</fileNamePattern>
+<!--            按照文件的大小拆分-->
+            <maxFileSize>1MB</maxFileSize>
+        </rollingPolicy>
+<!--        日志级别过滤器-->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+<!--            日志过滤级别-->
+<!--            Error级别的过滤  超过ERROR 就会输入到日志文件中 反之过滤-->
+            <level>ERROR</level>
+<!--           超过ERROR 就会输入到日志文件中-->
+            <onMatch>ACCEPT</onMatch>
+<!--            小于这个级别 就 拦截-->
+            <onMisMatch>DENY</onMisMatch>
+        </filter>
+    </appender>
+
+<!--    日志输出为html格式-->
+    <appender name="html_file" class="ch.qos.logback.core.FileAppender">
+        <!--        日志文件保存的位置-->
+        <file>${log_dir}/logback.html</file>
+        <encoder value="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="ch.qos.logback.classic.html.HTMLLayout">
+                <pattern>${pattern}</pattern>
+            </layout>
+        </encoder>
+    </appender>
+
+    <!--    异步日志 可以提高性能*************************************-->
+    <appender name="async" class="ch.qos.logback.classic.AsyncAppender">
+        <!--        指定某个具体的appender-->
+        <appender-ref ref="rollFile"/>
+    </appender>
+
+
+<!--    配置父日志对象 rootLogger ****************************-->
+    <root level="ALL">
+        <appender-ref ref="console"/>
+<!--        <appender-ref ref="file"/>-->
+        <appender-ref ref="async"/>
+    </root>
+
+<!--    自定义logger对象-->
+<!--    additicity=false定义logger对象是否继承rootLogger对象-->
+<!--    默认情况下logger对象是继承rootLogger的，利用这种方法，我们可以将自己的日志输出到文件中，将非业务日志输出到控制台上-->
+    <logger name="site.sanniu" level="info" additivity="false">
+        <appender-ref ref="console"/>
+        <appender-ref ref="async"/>
+    </logger>
+</configuration>
